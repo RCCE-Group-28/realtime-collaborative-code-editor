@@ -5,7 +5,10 @@ export async function POST(req: Request) {
   const { email, password } = await req.json();
   try {
     const { token, username } = await loginUser(email, password);
-    return NextResponse.json({ message: "Login successful", token, username });
+    return NextResponse.json(
+      { message: "Login successful", token, username, email },
+      { status: 200 },
+    );
   } catch (err: unknown) {
     const errorMessage =
       typeof err === "object" && err !== null && "message" in err

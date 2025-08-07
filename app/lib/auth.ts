@@ -34,7 +34,7 @@ export const loginUser = async (email: string, password: string) => {
     },
   );
 
-  return { token, username: user.username };
+  return { token, username: user.username, email: user.email };
 };
 
 export const verifyToken = (token: string) => {
@@ -42,6 +42,7 @@ export const verifyToken = (token: string) => {
     return jwt.verify(token, JWT_SECRET) as {
       userId: string;
       username: string;
+      email: string;
     };
   } catch {
     return null;
