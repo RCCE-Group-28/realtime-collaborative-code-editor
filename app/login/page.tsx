@@ -1,38 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { loginAction } from "./actions";
+import { useActionState } from "react";
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [state, formAction, isPending] = useActionState(loginAction, {
+    success: false,
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify({ username: data.username }));
+  useEffect(() => {
+    if (state.success) {
       router.push("/dashboard");
-    } else {
-      alert(data.error || "Login failed");
     }
-  };
+  }, [state.success, router]);
 
   return (
     <main className="min-h-screen flex justify-center items-center bg-gradient-to-br from-purple-600 to-indigo-700 px-4">
       <form
-        onSubmit={handleSubmit}
+        action={formAction}
         className="bg-white shadow-lg rounded-xl p-8 space-y-4 w-full max-w-md text-gray-800"
       >
         <h2 className="text-2xl font-semibold text-center text-purple-700">
@@ -43,7 +31,6 @@ export default function Login() {
           type="email"
           name="email"
           placeholder="Email"
-          onChange={handleChange}
           className="block w-full border p-2 rounded"
           required
         />
@@ -53,7 +40,6 @@ export default function Login() {
             type={showPassword ? "text" : "password"}
             name="password"
             placeholder="Password"
-            onChange={handleChange}
             className="block w-full border p-2 rounded"
             required
           />
@@ -66,8 +52,25 @@ export default function Login() {
           </button>
         </div>
 
-        <button className="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800">
-          Login
+        {state.message && (
+          <>
+            {state.success ? (
+              <p className="text-green-600 text-sm text-center">
+                {state.message}
+              </p>
+            ) : (
+              <p className="text-red-600 text-sm text-center">
+                {state.message}
+              </p>
+            )}
+          </>
+        )}
+
+        <button
+          className="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800 disabled:opacity-50"
+          disabled={isPending}
+        >
+          {isPending ? "Logging in..." : "Login"}
         </button>
 
         <p className="text-center text-sm text-gray-600">
