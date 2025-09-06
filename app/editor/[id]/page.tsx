@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import * as Y from "yjs";
@@ -21,9 +21,23 @@ import {
   VscComment,
 } from "react-icons/vsc";
 
-type FileNode = { name: string; type: "file" | "folder"; children?: FileNode[]; content?: string | null };
-type ChatMessage = { senderEmail: string; senderUsername: string; message: string; timestamp: number };
-type NodeAddedPayload = { type: "file" | "folder"; parentPath: string; name: string };
+type FileNode = {
+  name: string;
+  type: "file" | "folder";
+  children?: FileNode[];
+  content?: string | null;
+};
+type ChatMessage = {
+  senderEmail: string;
+  senderUsername: string;
+  message: string;
+  timestamp: number;
+};
+type NodeAddedPayload = {
+  type: "file" | "folder";
+  parentPath: string;
+  name: string;
+};
 type NodeDeletedPayload = { path: string };
 
 export default function EditorPage() {
@@ -45,35 +59,80 @@ export default function EditorPage() {
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
   const [filesContent, setFilesContent] = useState<Record<string, string>>({});
   const [activeFile, setActiveFile] = useState<string>("");
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const [projectTitle, setProjectTitle] = useState("Loading...");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [presence, setPresence] = useState<
-    { clientId: number; user?: { name?: string; email?: string; color?: string }; cursor?: { line: number; column: number } }[]
+    {
+      clientId: number;
+      user?: { name?: string; email?: string; color?: string };
+      cursor?: { line: number; column: number };
+    }[]
   >([]);
-  const [user, setUser] = useState<{ email: string; username?: string } | null>(null);
+  const [user, setUser] = useState<{ email: string; username?: string } | null>(
+    null,
+  );
 
   // ---------- Monaco worker setup ----------
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    (window as any).MonacoEnvironment = (window as any).MonacoEnvironment || {};
-    (window as any).MonacoEnvironment.getWorker = function (moduleId: any, label: string) {
+    type MonacoEnv = {
+      MonacoEnvironment?: {
+        getWorker?: (moduleId: string, label: string) => Worker;
+      };
+    };
+    (window as MonacoEnv).MonacoEnvironment =
+      (window as MonacoEnv).MonacoEnvironment || {};
+    (
+      (window as MonacoEnv).MonacoEnvironment as {
+        getWorker?: (moduleId: string, label: string) => Worker;
+      }
+    ).getWorker = function (moduleId: string, label: string) {
       if (label === "json") {
-        return new Worker(new URL("monaco-editor/esm/vs/language/json/json.worker", import.meta.url), { type: "module" });
+        return new Worker(
+          new URL(
+            "monaco-editor/esm/vs/language/json/json.worker",
+            import.meta.url,
+          ),
+          { type: "module" },
+        );
       }
       if (label === "css" || label === "scss" || label === "less") {
-        return new Worker(new URL("monaco-editor/esm/vs/language/css/css.worker", import.meta.url), { type: "module" });
+        return new Worker(
+          new URL(
+            "monaco-editor/esm/vs/language/css/css.worker",
+            import.meta.url,
+          ),
+          { type: "module" },
+        );
       }
       if (label === "html" || label === "handlebars" || label === "razor") {
-        return new Worker(new URL("monaco-editor/esm/vs/language/html/html.worker", import.meta.url), { type: "module" });
+        return new Worker(
+          new URL(
+            "monaco-editor/esm/vs/language/html/html.worker",
+            import.meta.url,
+          ),
+          { type: "module" },
+        );
       }
       if (label === "typescript" || label === "javascript") {
-        return new Worker(new URL("monaco-editor/esm/vs/language/typescript/ts.worker", import.meta.url), { type: "module" });
+        return new Worker(
+          new URL(
+            "monaco-editor/esm/vs/language/typescript/ts.worker",
+            import.meta.url,
+          ),
+          { type: "module" },
+        );
       }
-      return new Worker(new URL("monaco-editor/esm/vs/editor/editor.worker", import.meta.url), { type: "module" });
+      return new Worker(
+        new URL("monaco-editor/esm/vs/editor/editor.worker", import.meta.url),
+        { type: "module" },
+      );
     };
   }, []);
 
@@ -83,7 +142,10 @@ export default function EditorPage() {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        setUser({ email: parsed.email, username: parsed.username || parsed.email });
+        setUser({
+          email: parsed.email,
+          username: parsed.username || parsed.email,
+        });
       } catch {
         setUser({ email: "anonymous@local" });
       }
@@ -100,13 +162,13 @@ export default function EditorPage() {
 
     s.emit("join-doc", projectId);
 
-    s.on("chat-history", (msgs: any[]) => {
+    s.on("chat-history", (msgs: ChatMessage[]) => {
       setChatMessages(
         msgs.map((m) => ({
-          senderEmail: m.senderEmail ?? m.user ?? "unknown",
-          senderUsername: m.senderUsername ?? m.user ?? undefined,
+          senderEmail: m.senderEmail,
+          senderUsername: m.senderUsername,
           message: m.message,
-          timestamp: Number(m.timestamp) || Date.now(),
+          timestamp: m.timestamp,
         })),
       );
     });
@@ -116,7 +178,11 @@ export default function EditorPage() {
     });
 
     s.on("node-added", (payload: NodeAddedPayload) => {
-      setFileTree((prev) => addNode(prev, payload, (fullPath) => setFilesContent((p) => ({ ...p, [fullPath]: "" }))));
+      setFileTree((prev) =>
+        addNode(prev, payload, (fullPath) =>
+          setFilesContent((p) => ({ ...p, [fullPath]: "" })),
+        ),
+      );
       setExpandedFolders((p) => new Set(p).add(payload.parentPath));
     });
 
@@ -130,9 +196,12 @@ export default function EditorPage() {
       });
     });
 
-    s.on("remote-changes", ({ file, content }: { file: string; content: string }) => {
-      setFilesContent((p) => ({ ...p, [file]: content }));
-    });
+    s.on(
+      "remote-changes",
+      ({ file, content }: { file: string; content: string }) => {
+        setFilesContent((p) => ({ ...p, [file]: content }));
+      },
+    );
 
     return () => {
       s.disconnect();
@@ -164,6 +233,80 @@ export default function EditorPage() {
       .catch(console.error);
   }, [projectId]);
 
+  const addRemoteCursorStyles = useCallback(
+    (
+      states: {
+        clientId: number;
+        user?: { name?: string; email?: string; color?: string };
+      }[],
+    ) => {
+      const styleId = "remote-cursors-styles";
+      let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+      }
+      const rules: string[] = [];
+      states.forEach((s) => {
+        if (!s.user) return;
+        const cid = s.clientId;
+        const color =
+          s.user.color ??
+          colorFromString(s.user.email ?? s.user.name ?? "unknown");
+        rules.push(
+          `.monaco-editor .remoteCursor_${cid} { background: ${hexToRgba(color, 0.12)}; border-left: 2px solid ${color}; }`,
+        );
+      });
+      styleEl.innerHTML = rules.join("\n");
+    },
+    [],
+  );
+
+  // ---------- remote cursor decorations ----------
+  const decorationsRef = useRef<string[]>([]);
+  const updateRemoteCursorDecorations = useCallback(
+    (
+      states: {
+        clientId: number;
+        user?: { name?: string; email?: string; color?: string };
+        cursor?: { line: number; column: number };
+      }[],
+    ) => {
+      if (!editorRef.current) return;
+      const editor = editorRef.current;
+      const myClientId = providerRef.current?.awareness.clientID;
+      const decs: monaco.editor.IModelDeltaDecoration[] = [];
+
+      states.forEach((s) => {
+        if (!s.cursor || s.clientId === myClientId) return;
+        const line = s.cursor.line ?? 1;
+        const col = s.cursor.column ?? 1;
+
+        decs.push({
+          range: new monaco.Range(line, col, line, col),
+          options: {
+            className: undefined,
+            isWholeLine: false,
+            stickiness:
+              monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+            hoverMessage: {
+              value: `**${s.user?.name ?? s.user?.email ?? "user"}**`,
+            },
+            glyphMarginClassName: undefined,
+            inlineClassName: `remoteCursor_${s.clientId}`,
+          },
+        });
+      });
+
+      const newDecorIds = editor.deltaDecorations(decorationsRef.current, decs);
+      decorationsRef.current = newDecorIds;
+
+      addRemoteCursorStyles(states);
+    },
+    [addRemoteCursorStyles],
+  );
+
   // ---------- when activeFile changes: create Yjs provider + MonacoBinding for that file ----------
   useEffect(() => {
     if (!activeFile || !user || !editorRef.current) return;
@@ -194,13 +337,21 @@ export default function EditorPage() {
       const safeFile = activeFile.replace(/[\/\\]/g, "--").replace(/\./g, "-");
       const docName = `${projectId}-${safeFile}`;
 
-      const provider = new WebsocketProvider("ws://localhost:1234", docName, ydoc);
+      const provider = new WebsocketProvider(
+        "ws://localhost:1234",
+        docName,
+        ydoc,
+      );
       providerRef.current = provider;
 
       const uri = monaco.Uri.parse(`inmemory:///${projectId}/${safeFile}`);
       let model = monaco.editor.getModel(uri);
       if (!model) {
-        model = monaco.editor.createModel(filesContent[activeFile] ?? "", "javascript", uri);
+        model = monaco.editor.createModel(
+          filesContent[activeFile] ?? "",
+          "javascript",
+          uri,
+        );
       }
       modelRef.current = model;
       if (editorRef.current) {
@@ -212,7 +363,12 @@ export default function EditorPage() {
       // Sanity check for editorRef.current before binding
       if (!editorRef.current) return;
 
-      const binding = new MonacoBinding(ytext, model, new Set([editorRef.current]), provider.awareness);
+      const binding = new MonacoBinding(
+        ytext,
+        model,
+        new Set([editorRef.current]),
+        provider.awareness,
+      );
       monacoBindingRef.current = binding;
 
       const color = user ? colorFromString(user.email) : "#888";
@@ -223,20 +379,36 @@ export default function EditorPage() {
       });
 
       const onAwarenessChange = () => {
-        const states = Array.from(provider.awareness.getStates().entries()).map(([clientId, state]: any) => ({
-          clientId: Number(clientId),
-          user: state?.user,
-          cursor: state?.cursor,
-        }));
+        const states = Array.from(provider.awareness.getStates().entries()).map(
+          (entry) => {
+            const [clientId, state] = entry as [
+              number,
+              {
+                user?: { name?: string; email?: string; color?: string };
+                cursor?: { line: number; column: number };
+              },
+            ];
+            return {
+              clientId: Number(clientId),
+              user: state?.user,
+              cursor: state?.cursor,
+            };
+          },
+        );
         setPresence(states);
         updateRemoteCursorDecorations(states);
       };
 
       provider.awareness.on("change", onAwarenessChange);
 
-      const cursorListener = editorRef.current.onDidChangeCursorPosition((e) => {
-        provider.awareness.setLocalStateField("cursor", { line: e.position.lineNumber, column: e.position.column });
-      });
+      const cursorListener = editorRef.current.onDidChangeCursorPosition(
+        (e: monaco.editor.ICursorPositionChangedEvent) => {
+          provider.awareness.setLocalStateField("cursor", {
+            line: e.position.lineNumber,
+            column: e.position.column,
+          });
+        },
+      );
 
       onAwarenessChange();
 
@@ -257,61 +429,20 @@ export default function EditorPage() {
         if (cleanup) cleanup();
       });
     };
-  }, [activeFile, filesContent, user, projectId]);
-
-  // ---------- remote cursor decorations ----------
-  const decorationsRef = useRef<string[]>([]);
-  function updateRemoteCursorDecorations(states: { clientId: number; user?: any; cursor?: any }[]) {
-    if (!editorRef.current) return;
-    const editor = editorRef.current;
-    const myClientId = providerRef.current?.awareness.clientID;
-    const decs: monaco.editor.IModelDeltaDecoration[] = [];
-
-    states.forEach((s) => {
-      if (!s.cursor || s.clientId === myClientId) return;
-      const color = s.user?.color ?? colorFromString(s.user?.email ?? s.user?.name ?? "unknown");
-      const line = s.cursor.line ?? 1;
-      const col = s.cursor.column ?? 1;
-
-      decs.push({
-        range: new monaco.Range(line, col, line, col),
-        options: {
-          className: undefined,
-          isWholeLine: false,
-          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-          hoverMessage: { value: `**${s.user?.name ?? s.user?.email ?? "user"}**` },
-          glyphMarginClassName: undefined,
-          inlineClassName: `remoteCursor_${s.clientId}`,
-        },
-      });
-    });
-
-    const newDecorIds = editor.deltaDecorations(decorationsRef.current, decs);
-    decorationsRef.current = newDecorIds;
-
-    addRemoteCursorStyles(states);
-  }
-
-  function addRemoteCursorStyles(states: { clientId: number; user?: any }[]) {
-    const styleId = "remote-cursors-styles";
-    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = styleId;
-      document.head.appendChild(styleEl);
-    }
-    const rules: string[] = [];
-    states.forEach((s) => {
-      if (!s.user) return;
-      const cid = s.clientId;
-      const color = s.user.color ?? colorFromString(s.user.email ?? s.user.name ?? "unknown");
-      rules.push(`.monaco-editor .remoteCursor_${cid} { background: ${hexToRgba(color, 0.12)}; border-left: 2px solid ${color}; }`);
-    });
-    styleEl.innerHTML = rules.join("\n");
-  }
+  }, [
+    activeFile,
+    filesContent,
+    user,
+    projectId,
+    updateRemoteCursorDecorations,
+  ]);
 
   // ---------- helpers: tree add/delete ----------
-  function addNode(tree: FileNode[], payload: NodeAddedPayload, onFileInit?: (full: string) => void) {
+  function addNode(
+    tree: FileNode[],
+    payload: NodeAddedPayload,
+    onFileInit?: (full: string) => void,
+  ) {
     const { type, parentPath, name } = payload;
     const newTree = JSON.parse(JSON.stringify(tree)) as FileNode[];
 
@@ -352,7 +483,11 @@ export default function EditorPage() {
   function promptAdd(type: "file" | "folder", parentPath: string) {
     const name = prompt(`Enter ${type} name`);
     if (!name) return;
-    setFileTree((p) => addNode(p, { type, parentPath, name }, (full) => setFilesContent((s) => ({ ...s, [full]: "" }))));
+    setFileTree((p) =>
+      addNode(p, { type, parentPath, name }, (full) =>
+        setFilesContent((s) => ({ ...s, [full]: "" })),
+      ),
+    );
     setExpandedFolders((p) => new Set(p).add(parentPath));
     socketRef.current?.emit("node-added", { type, parentPath, name });
   }
@@ -386,7 +521,11 @@ export default function EditorPage() {
     return nodes.map((n) => {
       const path = base ? `${base}/${n.name}` : n.name;
       if (n.type === "folder")
-        return { name: n.name, type: "folder", children: n.children ? reconstructTree(n.children, path) : [] };
+        return {
+          name: n.name,
+          type: "folder",
+          children: n.children ? reconstructTree(n.children, path) : [],
+        };
       return { name: n.name, type: "file", content: filesContent[path] || "" };
     });
   }
@@ -398,7 +537,12 @@ export default function EditorPage() {
       const safe = activeFile.replace(/[\/\\]/g, "--").replace(/\./g, "-");
       const uri = monaco.Uri.parse(`inmemory:///${projectId}/${safe}`);
       let model = monaco.editor.getModel(uri);
-      if (!model) model = monaco.editor.createModel(filesContent[activeFile] ?? "", "javascript", uri);
+      if (!model)
+        model = monaco.editor.createModel(
+          filesContent[activeFile] ?? "",
+          "javascript",
+          uri,
+        );
       modelRef.current = model;
       editor.setModel(model);
     }
@@ -409,14 +553,26 @@ export default function EditorPage() {
     if (val == null) return;
     if (!activeFile) return;
     setFilesContent((p) => ({ ...p, [activeFile]: val }));
-    socketRef.current?.emit("editor-changes", { file: activeFile, content: val });
+    socketRef.current?.emit("editor-changes", {
+      file: activeFile,
+      content: val,
+    });
   }
 
   // send chat
   async function sendChat() {
     if (!newMessage.trim() || !user) return;
-    const payload = { senderEmail: user.email, senderUsername: user.username ?? user.email, message: newMessage.trim() };
-    fetch(`/api/projects/${projectId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).catch(console.error);
+    const payload: ChatMessage = {
+      senderEmail: user.email,
+      senderUsername: user.username ?? user.email,
+      message: newMessage.trim(),
+      timestamp: Date.now(),
+    };
+    fetch(`/api/projects/${projectId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(console.error);
     socketRef.current?.emit("chat-message", payload);
     setNewMessage("");
   }
@@ -450,7 +606,8 @@ export default function EditorPage() {
               onClick={() => {
                 setExpandedFolders((p) => {
                   const n = new Set(p);
-                  n.has(path) ? n.delete(path) : n.add(path);
+                  if (n.has(path)) n.delete(path);
+                  else n.add(path);
                   return n;
                 });
               }}
@@ -460,21 +617,43 @@ export default function EditorPage() {
               <span className="truncate">{node.name}</span>
 
               <div className="ml-auto flex gap-1">
-                <button className="text-gray-400 hover:text-gray-200" onClick={(e) => { e.stopPropagation(); promptAdd("file", path); }}>
+                <button
+                  className="text-gray-400 hover:text-gray-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    promptAdd("file", path);
+                  }}
+                >
                   <VscNewFile />
                 </button>
-                <button className="text-gray-400 hover:text-gray-200" onClick={(e) => { e.stopPropagation(); promptAdd("folder", path); }}>
+                <button
+                  className="text-gray-400 hover:text-gray-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    promptAdd("folder", path);
+                  }}
+                >
                   <VscNewFolder />
                 </button>
                 {path !== "root" && (
-                  <button className="text-gray-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); handleDelete(path); }}>
+                  <button
+                    className="text-gray-400 hover:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(path);
+                    }}
+                  >
                     <VscTrash />
                   </button>
                 )}
               </div>
             </div>
 
-            {isExpanded && node.children && <div className="pl-6 border-l border-gray-700 ml-2">{renderTree(node.children, path)}</div>}
+            {isExpanded && node.children && (
+              <div className="pl-6 border-l border-gray-700 ml-2">
+                {renderTree(node.children, path)}
+              </div>
+            )}
           </div>
         );
       }
@@ -482,13 +661,21 @@ export default function EditorPage() {
         <div
           key={path}
           className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded text-sm select-none ${
-            activeFile === path ? "bg-gray-700 text-white" : "hover:bg-gray-700 text-gray-300"
+            activeFile === path
+              ? "bg-gray-700 text-white"
+              : "hover:bg-gray-700 text-gray-300"
           }`}
           onClick={() => setActiveFile(path)}
         >
           <VscFile />
           <span className="truncate">{node.name}</span>
-          <button onClick={(e) => { e.stopPropagation(); handleDelete(path); }} className="ml-auto text-gray-400 hover:text-red-500">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(path);
+            }}
+            className="ml-auto text-gray-400 hover:text-red-500"
+          >
             <VscTrash />
           </button>
         </div>
@@ -500,37 +687,80 @@ export default function EditorPage() {
   return (
     <div className="flex h-screen bg-gray-900 text-gray-200">
       {/* left sidebar */}
-      <aside className={`w-64 bg-gray-800 p-4 overflow-y-auto text-sm border-r border-gray-700 ${chatOpen ? "hidden md:block" : ""}`}>
-        <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">{projectTitle}</h2>
+      <aside
+        className={`w-64 bg-gray-800 p-4 overflow-y-auto text-sm border-r border-gray-700 ${chatOpen ? "hidden md:block" : ""}`}
+      >
+        <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
+          {projectTitle}
+        </h2>
         <div>{renderTree(fileTree)}</div>
         <div className="mt-4 flex gap-2">
-          <button className="flex-1 bg-blue-800 hover:bg-blue-700 py-1 rounded" onClick={() => promptAdd("folder", "root")}>+ Folder</button>
-          <button className="flex-1 bg-blue-800 hover:bg-blue-700 py-1 rounded" onClick={() => promptAdd("file", "root")}>+ File</button>
+          <button
+            className="flex-1 bg-blue-800 hover:bg-blue-700 py-1 rounded"
+            onClick={() => promptAdd("folder", "root")}
+          >
+            + Folder
+          </button>
+          <button
+            className="flex-1 bg-blue-800 hover:bg-blue-700 py-1 rounded"
+            onClick={() => promptAdd("file", "root")}
+          >
+            + File
+          </button>
         </div>
-        <button className="mt-4 w-full flex items-center gap-2 px-2 py-1 bg-green-700 hover:bg-green-600 rounded" onClick={() => setChatOpen((s) => !s)}><VscComment /> Chat</button>
+        <button
+          className="mt-4 w-full flex items-center gap-2 px-2 py-1 bg-green-700 hover:bg-green-600 rounded"
+          onClick={() => setChatOpen((s) => !s)}
+        >
+          <VscComment /> Chat
+        </button>
         <div className="mt-6">
           <h4 className="text-sm font-medium mb-2">Active</h4>
           <div className="space-y-2">
             {presence.map((p) => (
               <div key={p.clientId} className="flex items-center gap-2">
-                <span style={{ width: 10, height: 10, background: p.user?.color ?? "#888", borderRadius: 3 }} />
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    background: p.user?.color ?? "#888",
+                    borderRadius: 3,
+                  }}
+                />
                 <div>
-                  <div className="font-medium text-sm">{p.user?.name ?? p.user?.email ?? "unknown"}</div>
-                  <div className="text-xs text-gray-400">{p.cursor ? `Line ${p.cursor.line}, Col ${p.cursor.column}` : p.user?.email ?? ""}</div>
+                  <div className="font-medium text-sm">
+                    {p.user?.name ?? p.user?.email ?? "unknown"}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {p.cursor
+                      ? `Line ${p.cursor.line}, Col ${p.cursor.column}`
+                      : (p.user?.email ?? "")}
+                  </div>
                 </div>
               </div>
             ))}
-            {presence.length === 0 && <div className="text-xs text-gray-400">No collaborators yet</div>}
+            {presence.length === 0 && (
+              <div className="text-xs text-gray-400">No collaborators yet</div>
+            )}
           </div>
         </div>
       </aside>
 
       {/* editor area */}
-      <div className={`flex-1 flex flex-col ${chatOpen ? "md:w-2/3" : "w-full"}`}>
+      <div
+        className={`flex-1 flex flex-col ${chatOpen ? "md:w-2/3" : "w-full"}`}
+      >
         <div className="flex justify-between items-center bg-gray-800 px-4 py-2 border-b border-gray-700">
-          <div>Editing: <strong>{activeFile || "No file selected"}</strong></div>
+          <div>
+            Editing: <strong>{activeFile || "No file selected"}</strong>
+          </div>
           <div className="flex gap-2">
-            <button className="bg-blue-800 hover:bg-blue-600 px-4 py-1 rounded" onClick={handleSaveProject}>Save Project</button>
+            <button
+              className="bg-blue-800 hover:bg-blue-600 px-4 py-1 rounded"
+              onClick={handleSaveProject}
+            >
+              Save Project
+            </button>
           </div>
         </div>
 
@@ -549,19 +779,40 @@ export default function EditorPage() {
 
       {/* chat panel (resizable on the right) */}
       {chatOpen && (
-        <Resizable defaultSize={{ width: 320 }} minWidth={220} maxWidth={600} enable={{ left: true }}>
+        <Resizable
+          defaultSize={{ width: 320 }}
+          minWidth={220}
+          maxWidth={600}
+          enable={{ left: true }}
+        >
           <aside className="h-full bg-gray-800 p-4 border-l border-gray-700 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-semibold">Chat</h3>
-              <button className="text-gray-400 hover:text-gray-200" onClick={() => setChatOpen(false)}>Close</button>
+              <button
+                className="text-gray-400 hover:text-gray-200"
+                onClick={() => setChatOpen(false)}
+              >
+                Close
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto mb-2 space-y-3">
               {chatMessages.map((m, i) => (
                 <div key={i} className="text-sm">
                   <div className="flex items-center gap-2">
-                    <div style={{ width: 10, height: 10, background: colorFromString(m.senderEmail), borderRadius: 3 }} />
-                    <div className="font-semibold text-xs text-blue-300">{m.senderUsername ?? m.senderEmail}</div>
-                    <div className="text-xs text-gray-500 ml-auto">{new Date(m.timestamp).toLocaleTimeString()}</div>
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        background: colorFromString(m.senderEmail),
+                        borderRadius: 3,
+                      }}
+                    />
+                    <div className="font-semibold text-xs text-blue-300">
+                      {m.senderUsername ?? m.senderEmail}
+                    </div>
+                    <div className="text-xs text-gray-500 ml-auto">
+                      {new Date(m.timestamp).toLocaleTimeString()}
+                    </div>
                   </div>
                   <div className="ml-4">{m.message}</div>
                 </div>
@@ -569,8 +820,15 @@ export default function EditorPage() {
             </div>
 
             <div className="flex gap-2">
-              <input className="flex-1 p-2 rounded bg-gray-700 text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} />
-              <button onClick={sendChat} className="bg-blue-700 px-3 rounded">Send</button>
+              <input
+                className="flex-1 p-2 rounded bg-gray-700 text-white"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendChat()}
+              />
+              <button onClick={sendChat} className="bg-blue-700 px-3 rounded">
+                Send
+              </button>
             </div>
           </aside>
         </Resizable>

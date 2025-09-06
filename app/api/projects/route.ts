@@ -49,10 +49,16 @@ export async function POST(req: NextRequest) {
 
     const newProject = await Project.create({
       title,
-      description: description || "", 
+      description: description || "",
       owner: ownerEmail,
       collaborators: [],
-      members: [{ email: ownerEmail, username: ownerEmail.split('@')[0], role: "owner" }],
+      members: [
+        {
+          email: ownerEmail,
+          username: ownerEmail.split("@")[0],
+          role: "owner",
+        },
+      ],
       structure: defaultStructure,
     });
 

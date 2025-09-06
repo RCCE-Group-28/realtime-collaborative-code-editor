@@ -1,7 +1,7 @@
 import "dotenv/config";
 import http from "http";
 import { WebSocketServer } from "ws";
-// NOTE: import from built utils, not top-level
+// @ts-expect-error import from built utils, not top-level
 import { setupWSConnection } from "y-websocket/bin/utils";
 
 const server = http.createServer();

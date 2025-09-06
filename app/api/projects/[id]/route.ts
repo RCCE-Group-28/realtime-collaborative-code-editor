@@ -41,7 +41,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   if (body.description !== undefined) update.description = body.description;
   if (body.structure !== undefined) update.structure = body.structure;
 
-  const project = await Project.findByIdAndUpdate(id, update, { new: true }).lean();
+  const project = await Project.findByIdAndUpdate(id, update, {
+    new: true,
+  }).lean();
   if (!project) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
@@ -58,7 +60,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  const chatMsg = { senderEmail, senderUsername, message, timestamp: new Date() };
+  const chatMsg = {
+    senderEmail,
+    senderUsername,
+    message,
+    timestamp: new Date(),
+  };
   project.chats.push(chatMsg);
   await project.save();
 
