@@ -131,7 +131,7 @@ export default function InvitationsPage() {
         <nav className="space-y-2 flex-1">
           <Button
             variant="default"
-            className="w-full bg-accent/10 justify-start text-lg"
+            className="w-full bg-accent/10 justify-start text-lg hover:bg-gray-700 hover:text-accent-foreground transition-all cursor-pointer"
             onClick={() => router.push("/projects")}
           >
             Projects

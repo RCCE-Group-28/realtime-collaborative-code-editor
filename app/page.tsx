@@ -58,13 +58,13 @@ const WelcomePage = () => {
             <Link href="/login">
               <Button
                 variant="ghost"
-                className="text-foreground-muted hover:text-foreground"
+                className="text-foreground-muted hover:text-foreground hover:bg-accent/30 hover:text-foreground transition-all cursor-pointer"
               >
                 Sign In
               </Button>
             </Link>
-            <Link href="/login">
-              <Button className="bg-gradient-primary hover:shadow-primary">
+            <Link href="/signup">
+              <Button className="bg-gradient-primary hover:shadow-primary cursor-pointer">
                 Get Started
               </Button>
             </Link>
@@ -95,10 +95,10 @@ const WelcomePage = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/login">
+                  <Link href="/signup">
                     <Button
                       size="lg"
-                      className="bg-gradient-primary hover:shadow-primary text-lg px-8 py-6 group"
+                      className="bg-gradient-primary hover:shadow-primary text-lg px-8 py-6 group cursor-pointer"
                     >
                       Start Coding Now
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -107,7 +107,7 @@ const WelcomePage = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-lg px-8 py-6"
+                    className="text-lg px-8 py-6 hover:bg-accent/10 hover:text-foreground transition-all cursor-pointer"
                   >
                     Watch Demo
                   </Button>
@@ -212,7 +212,7 @@ const WelcomePage = () => {
                 <Link href="/login">
                   <Button
                     size="lg"
-                    className="bg-gradient-primary hover:shadow-primary text-lg px-8 py-6"
+                    className="bg-gradient-primary hover:shadow-primary text-lg px-8 py-6 group cursor-pointer"
                   >
                     Start Your Free Project
                   </Button>

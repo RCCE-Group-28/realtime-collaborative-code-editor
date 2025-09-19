@@ -31,8 +31,8 @@ import {
   Calendar,
   LogOut,
 } from "lucide-react";
-import Image from "next/image";
-import Logo from "@/app/assets/logo.png";
+
+import LogoTitle from "../components/LogoTitle";
 
 interface Project {
   _id: string;
@@ -335,12 +335,9 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-border p-6 flex flex-col shadow-lg">
-        <div className="mb-8 flex items-center gap-4">
-          <Image src={Logo} alt="Logo" className="h-10 w-10" />
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            CollabCode
-          </h1>
+      <aside className="fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-border p-6 flex flex-col">
+        <div className="mb-8">
+          <LogoTitle />
         </div>
 
         <nav className="space-y-2 flex-1">
@@ -353,7 +350,7 @@ export default function ProjectsPage() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full bg-accent/10 justify-between text-lg hover:bg-accent hover:text-accent-foreground transition-all"
+            className="w-full bg-accent/10 justify-between text-lg hover:bg-gray-700 hover:text-accent-foreground transition-all cursor-pointer"
             onClick={() => router.push("/invitations")}
           >
             Invitations

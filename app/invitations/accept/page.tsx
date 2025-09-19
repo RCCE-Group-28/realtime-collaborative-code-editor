@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import LogoTitle from "@/app/components/LogoTitle";
+import { Card } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import Success from "@/app/assets/accepted.png";
+import Failure from "@/app/assets/failed.png";
+import Image from "next/image";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -44,32 +50,53 @@ export default function AcceptInvitationPage() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-200">
-      <h1 className="text-3xl font-bold mb-4">Accept Invitation</h1>
-      <div className="bg-gray-800 p-6 rounded shadow-lg">
-        {loading ? (
-          <p>Processing...</p>
-        ) : (
-          <>
-            <p>{status}</p>
-            {(status.toLowerCase().includes("not for you") ||
-              status.toLowerCase().includes("error") ||
-              status.toLowerCase().includes("invalid") ||
-              status === "403") && (
-              <div className="flex justify-center">
-                <button
-                  className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
-                  onClick={() => {
-                    localStorage.removeItem("user");
-                    router.push("/login");
-                  }}
-                >
-                  Go to Login page
-                </button>
-              </div>
+    <div className="flex flex-col items-center justify-center min-h-screen inset-0">
+      <LogoTitle />
+      <div className="absolute inset-0 bg-flow opacity-10"></div>
+      <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float"></div>
+      <div
+        className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-float"
+        style={{ animationDelay: "1s" }}
+      ></div>
+      <div className="flex flex-col items-center justify-center z-10 w-full max-w-md mt-8">
+        <Card className="w-full p-8 flex flex-col items-center">
+          <h1 className="text-3xl font-bold mb-[-12]">Accept Invitation</h1>
+          <div className="p-6 rounded shadow-lg w-full flex flex-col items-center">
+            {loading ? (
+              <p>Processing...</p>
+            ) : (
+              <>
+                {status.toLowerCase().includes("accepted") && (
+                  <Image src={Success} alt="Accepted" className="h-55 w-85" />
+                )}
+                {(status.toLowerCase().includes("not for you") ||
+                  status.toLowerCase().includes("error") ||
+                  status.toLowerCase().includes("invalid") ||
+                  status === "403") && (
+                  <Image src={Failure} alt="Failed" className="h-55 w-85" />
+                )}
+                <p className="text-center">{status}</p>
+                {(status.toLowerCase().includes("not for you") ||
+                  status.toLowerCase().includes("error") ||
+                  status.toLowerCase().includes("invalid") ||
+                  status === "403") && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      className="w-full bg-gradient-primary hover:shadow-primary cursor-pointer mt-4"
+                      onClick={() => {
+                        localStorage.removeItem("user");
+                        router.push("/login");
+                      }}
+                    >
+                      Go to Login page
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </Card>
       </div>
     </div>
   );
