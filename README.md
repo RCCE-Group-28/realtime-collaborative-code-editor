@@ -74,7 +74,19 @@ yarn install
 Copy the environment template and configure:
 
 ```bash
+# 1. Navigate to nextjs-app
+cd apps/nextjs-app
 cp .env.example .env.local
+# Edit .env.local with your values
+
+# 2. Navigate to socketio-server
+cd ../socketio-server
+cp .env.example .env
+# Edit .env with your values
+
+# 4. Return to root and start development
+cd ../..
+npm run dev
 ```
 
 See [Environment Variables](#environment-variables) section for details.
