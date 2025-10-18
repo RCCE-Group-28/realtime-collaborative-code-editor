@@ -22,6 +22,7 @@ A modern, browser-based code editor enabling seamless real-time collaboration wi
 - [Installation](#installation)
 - [Development](#development)
 - [Building](#building)
+- [Testing](#testing)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
@@ -207,6 +208,197 @@ npm run build --workspace=yjs-server
 4. Copy Client ID and Client Secret to `.env`
 
 ---
+
+## Testing
+
+### Jest Unit Tests
+
+Jest tests run on individual packages and components.
+
+#### Run All Jest Tests
+
+```bash
+npm run test
+```
+
+#### Run Tests in Specific Workspace
+
+```bash
+npm run test --workspace=nextjs-app
+npm run test --workspace=socketio-server
+npm run test --workspace=database
+```
+
+#### Run Tests in Watch Mode
+
+```bash
+npm run test -- --watch
+```
+
+#### Run Tests with Coverage
+
+```bash
+npm run test -- --coverage
+```
+
+---
+
+### Playwright E2E Tests
+
+End-to-end tests verify the entire application workflow.
+
+#### Run All E2E Tests
+
+```bash
+npm run test:e2e
+```
+
+#### Run E2E Tests in UI Mode (Interactive)
+
+```bash
+npm run test:e2e:ui
+```
+
+#### Run E2E Tests in Debug Mode
+
+```bash
+npm run test:e2e:debug
+```
+
+#### Run E2E Tests with Browser Window Visible
+
+```bash
+npm run test:e2e:headed
+```
+
+#### Run Specific E2E Test File
+
+```bash
+npx playwright test e2e/tests/collaboration.spec.ts
+```
+
+---
+
+### JMeter Performance Tests
+
+JMeter tests measure API performance, load testing, and WebSocket performance.
+
+#### Prerequisites
+
+Install JMeter:
+
+```bash
+# macOS with Homebrew
+brew install jmeter
+
+# Or download from: https://jmeter.apache.org/download_jmeter.cgi
+```
+
+Verify installation:
+
+```bash
+jmeter --version
+```
+
+#### Run JMeter Tests
+
+**1. API Test (Basic API performance)**
+
+```bash
+npm run test:jmeter:api
+```
+
+**2. Performance Test (Response times)**
+
+```bash
+npm run test:jmeter:performance
+```
+
+**3. Load Test (Concurrent users)**
+
+```bash
+npm run test:jmeter:load
+```
+
+**4. Socket.IO Performance Test (WebSocket performance)**
+
+```bash
+npm run test:jmeter:socketio
+```
+
+**5. Yjs Performance Test (CRDT sync performance)**
+
+```bash
+npm run test:jmeter:yjs
+```
+
+**6. Run All JMeter Tests**
+
+```bash
+npm run test:jmeter:all
+```
+
+#### View JMeter Results
+
+Results are generated in `jmeter-tests/results/`:
+
+```bash
+# View API test report
+open jmeter-tests/results/api_test_report/index.html
+
+# View Performance test report
+open jmeter-tests/results/performance_report/index.html
+
+# View Load test report
+open jmeter-tests/results/load_report/index.html
+
+# View Socket.IO report
+open jmeter-tests/results/socketio_report/index.html
+
+# View Yjs report
+open jmeter-tests/results/yjs_report/index.html
+```
+
+#### Clean JMeter Results
+
+```bash
+npm run test:jmeter:clean
+```
+
+---
+
+## Complete Testing Workflow
+
+### Quick Start Testing
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start development servers
+npm run dev
+
+# 3. In a new terminal, run all tests
+npm run test              # Jest unit tests
+npm run test:e2e         # E2E tests
+npm run test:jmeter:all  # All JMeter tests
+```
+
+### Recommended Testing Order
+
+```bash
+# 1. Unit tests (fastest)
+npm run test
+
+# 2. E2E tests (integration)
+npm run test:e2e
+
+# 3. Performance tests (requires running servers)
+npm run dev &            # Start servers in background
+npm run test:jmeter:api
+npm run test:jmeter:socketio
+npm run test:jmeter:yjs
+```
 
 ## Usage
 
