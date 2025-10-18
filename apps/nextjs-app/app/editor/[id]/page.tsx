@@ -27,29 +27,31 @@ import { AiChatPanel } from "./components/AiChatPanel";
 import VersionControlPanel from "./components/versioncontrol";
 import { ResizablePanel } from "./components/ResizablePanel";
 import GitHubIntegrationPanel from "./components/GitHubIntegrationPanel";
+import { ToastContainer, type ToastMessage } from "./components/Toast";
 
-// --- Minimal Local Toast Implementation ---
-type ToastMessage = {
-  message: string;
-  type: "success" | "error";
+// --- Modern Toast Implementation ---
+type UseToastReturn = {
+  toasts: ToastMessage[];
+  showToast: (message: string, type: "success" | "error" | "info") => void;
+  dismissToast: (id: string) => void;
 };
 
-const useToast = () => {
-  const [toast, setToast] = useState<ToastMessage | null>(null);
-  const toastRef = useRef<number | null>(null);
+const useToast = (): UseToastReturn => {
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const showToast = useCallback(
-    (message: string, type: "success" | "error") => {
-      if (toastRef.current !== null) {
-        clearTimeout(toastRef.current);
-      }
-      setToast({ message, type });
-      toastRef.current = window.setTimeout(() => setToast(null), 4000);
+    (message: string, type: "success" | "error" | "info" = "info") => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, message, type }]);
     },
     [],
   );
 
-  return { toast, showToast };
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  return { toasts, showToast, dismissToast };
 };
 
 type StructureNode = {
@@ -76,7 +78,7 @@ export default function EditorPage() {
   useMonaco();
 
   const user = useUser();
-  const { toast, showToast } = useToast();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const {
     socket,
@@ -620,16 +622,8 @@ export default function EditorPage() {
 
   return (
     <div className="flex h-screen bg-background text-gray-200 overflow-hidden">
-      {/* Toast notification */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-white ${
-            toast.type === "success" ? "bg-green-600" : "bg-red-600"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Sidebar - File Tree */}
       <aside
@@ -1028,7 +1022,6 @@ export default function EditorPage() {
                 setCurrentBranch={setCurrentBranch}
                 showToast={showToast}
                 applyStructureToEditor={applyStructureToEditor}
-                onClose={() => setGithubOpen(false)}
               />
             </div>
           </div>

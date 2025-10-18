@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  VscGithubInverted,
   VscRepo,
   VscCloudUpload,
   VscCloudDownload,
@@ -56,7 +55,6 @@ interface GitHubIntegrationPanelProps {
   setCurrentBranch: (branch: string) => void;
   showToast: (message: string, type: "success" | "error") => void;
   applyStructureToEditor: (structure: StructureNode | null) => void;
-  onClose?: () => void;
 }
 
 const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
@@ -65,7 +63,6 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
   setCurrentBranch,
   showToast,
   applyStructureToEditor,
-  onClose,
 }) => {
   // GitHub state
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -725,22 +722,8 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
   if (!isConnected) {
     return (
-      <div className="flex h-full flex-col bg-[#1e1e1e] p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <VscGithubInverted className="text-2xl" />
-            GitHub Integration
-          </h2>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-        <div className="flex-1 flex items-center justify-center">
+      <div className="flex h-full flex-col bg-sidebar text-white overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-4">
           <GitHubConnectButton projectId={projectId} mode="popup" />
         </div>
       </div>
@@ -748,27 +731,11 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#1e1e1e] text-white overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#3e3e42]">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <VscGithubInverted className="text-2xl" />
-          GitHub Version Control
-        </h2>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
+    <div className="flex h-full flex-col bg-sidebar text-white overflow-hidden">
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Repository Selection */}
-        <Card className="bg-[#252526] border-[#3e3e42]">
+        <Card className="bg-sidebar border border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <VscRepo />
@@ -784,7 +751,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
                 );
                 if (repo) handleRepoSelect(repo);
               }}
-              className="w-full bg-[#3c3c3c] text-white border border-[#3e3e42] rounded px-3 py-2"
+              className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
             >
               <option value="">Select a repository</option>
@@ -796,7 +763,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
             </select>
 
             {selectedRepo && (
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-300">
                 <p>✓ Connected to: {selectedRepo.full_name}</p>
                 <a
                   href={selectedRepo.html_url}
@@ -812,7 +779,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
         </Card>
 
         {/* Create New Repository */}
-        <Card className="bg-[#252526] border-[#3e3e42]">
+        <Card className="bg-sidebar border border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <VscAdd />
@@ -824,21 +791,21 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
               placeholder="Repository name"
               value={newRepoName}
               onChange={(e) => setNewRepoName(e.target.value)}
-              className="bg-[#3c3c3c] border-[#3e3e42] text-white"
+              className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
             />
             <Textarea
               placeholder="Description (optional)"
               value={newRepoDescription}
               onChange={(e) => setNewRepoDescription(e.target.value)}
-              className="bg-[#3c3c3c] border-[#3e3e42] text-white"
+              className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={2}
               disabled={loading}
             />
             <Button
               onClick={handleCreateRepo}
               disabled={loading || !newRepoName.trim()}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
               <VscAdd className="mr-2" />
               Create Repository
@@ -848,7 +815,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Current Branch & Branches */}
         {hasLocalRepo && (
-          <Card className="bg-[#252526] border-[#3e3e42]">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">
                 Branch: {currentBranch}
@@ -857,13 +824,13 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-sm text-gray-400 block mb-2">
+                <label className="text-sm text-gray-300 block mb-2">
                   Switch Branch:
                 </label>
                 <select
                   value={currentBranch}
                   onChange={(e) => handleBranchSwitch(e.target.value)}
-                  className="w-full bg-[#3c3c3c] text-white border border-[#3e3e42] rounded px-3 py-2"
+                  className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={loading}
                 >
                   {localBranches.map((branch) => (
@@ -874,8 +841,8 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
                 </select>
               </div>
 
-              <div className="pt-2 border-t border-[#3e3e42]">
-                <label className="text-sm text-gray-400 block mb-2">
+              <div className="pt-2 border-t border-gray-700">
+                <label className="text-sm text-gray-300 block mb-2">
                   Create New Branch:
                 </label>
                 <div className="flex gap-2">
@@ -883,13 +850,13 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
                     placeholder="branch-name"
                     value={newBranchName}
                     onChange={(e) => setNewBranchName(e.target.value)}
-                    className="bg-[#3c3c3c] border-[#3e3e42] text-white"
+                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     disabled={loading}
                   />
                   <Button
                     onClick={handleCreateBranch}
                     disabled={loading || !newBranchName.trim()}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <VscAdd />
                   </Button>
@@ -901,19 +868,19 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Git Status */}
         {hasLocalRepo && (
-          <Card className="bg-[#252526] border-[#3e3e42]">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Git Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="text-sm">
-                <span className="text-gray-400">Staged files:</span>
+                <span className="text-gray-300">Staged files:</span>
                 <Badge className="ml-2 bg-green-600">
                   {stagedFiles.length}
                 </Badge>
               </div>
               <div className="text-sm">
-                <span className="text-gray-400">Unstaged files:</span>
+                <span className="text-gray-300">Unstaged files:</span>
                 <Badge className="ml-2 bg-yellow-600">
                   {unstagedFiles.length}
                 </Badge>
@@ -929,7 +896,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Push/Pull Actions */}
         {hasLocalRepo && selectedRepo && (
-          <Card className="bg-[#252526] border-[#3e3e42]">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Sync with GitHub</CardTitle>
             </CardHeader>
@@ -937,7 +904,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
               <Button
                 onClick={handlePush}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <VscCloudUpload className="mr-2" />
                 Push to GitHub
@@ -945,7 +912,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
               <Button
                 onClick={handlePull}
                 disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 <VscCloudDownload className="mr-2" />
                 Pull from GitHub
@@ -956,7 +923,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Commit History */}
         {commitHistory.length > 0 && (
-          <Card className="bg-[#252526] border-[#3e3e42]">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Recent Commits</CardTitle>
             </CardHeader>
@@ -965,13 +932,13 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
                 {commitHistory.slice(0, 10).map((commit) => (
                   <div
                     key={commit.hash}
-                    className="text-sm p-2 bg-[#3c3c3c] rounded border border-[#3e3e42]"
+                    className="text-sm p-2 bg-gray-700 rounded border border-gray-600"
                   >
                     <div className="font-mono text-xs text-gray-400 mb-1">
                       {commit.hash.substring(0, 7)}
                     </div>
                     <div className="text-white">{commit.message}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-gray-400 mt-1">
                       {commit.author} • {new Date(commit.date).toLocaleString()}
                     </div>
                   </div>
