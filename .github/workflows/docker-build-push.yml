@@ -1,9 +1,9 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 env:
@@ -73,6 +73,10 @@ jobs:
             NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
             NEXT_PUBLIC_FIREBASE_APP_ID=${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
             NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+            NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ vars.NEXT_PUBLIC_GITHUB_CLIENT_ID }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_SOCKETIO_SERVER_URL=${{ vars.NEXT_PUBLIC_SOCKETIO_SERVER_URL }}
+            NEXT_PUBLIC_YJS_SERVER_URL=${{ vars.NEXT_PUBLIC_YJS_SERVER_URL }}
 
       - name: Image digest
         run: echo "Image pushed with digest ${{ steps.meta.outputs.tags }}"

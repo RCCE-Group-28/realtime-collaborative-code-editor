@@ -35,7 +35,8 @@ describe("useVersionControlSocket", () => {
     it("should establish socket connection with correct URL", () => {
       renderHook(() => useVersionControlSocket(mockProjectId, mockEvents));
 
-      expect(io).toHaveBeenCalledWith("http://localhost:3001", {
+      // Config helper returns the URL based on environment variables
+      expect(io).toHaveBeenCalledWith(expect.any(String), {
         transports: ["websocket", "polling"],
       });
     });

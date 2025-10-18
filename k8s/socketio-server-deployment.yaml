@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socketio-server
+  labels:
+    app: socketio-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: socketio-server
+  template:
+    metadata:
+      labels:
+        app: socketio-server
+    spec:
+      containers:
+      - name: socketio-server
+        image: gcr.io/GCP_PROJECT_ID/socketio-server:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NODE_ENV
+        - name: SOCKET_PORT
+          value: "8000"
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: database-config
+              key: mongo-uri
+        - name: CORS_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CORS_ORIGIN
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: socketio-service
+  labels:
+    app: socketio-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: socketio
+  selector:
+    app: socketio-server
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: socketio-server-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: socketio-server
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

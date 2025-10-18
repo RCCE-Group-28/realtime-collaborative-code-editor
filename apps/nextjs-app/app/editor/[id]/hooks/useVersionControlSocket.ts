@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef } from "react";
 import io from "socket.io-client";
 import { FileNode } from "../types";
+import { getSocketIOServerUrl } from "@/app/lib/config";
 
 interface VersionControlEvents {
   onCommitCreated?: (data: {
@@ -60,9 +61,9 @@ export const useVersionControlSocket = (
   }, [events]);
 
   useEffect(() => {
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
-    const socket = io(socketUrl, { transports: ["websocket", "polling"] });
+    const socket = io(getSocketIOServerUrl(), {
+      transports: ["websocket", "polling"],
+    });
 
     socketRef.current = socket;
 

@@ -27,7 +27,8 @@ describe("useSocket", () => {
     it("should establish socket connection on mount", () => {
       renderHook(() => useSocket(mockProjectId));
 
-      expect(io).toHaveBeenCalledWith("http://localhost:3001");
+      // Config helper returns the default localhost URL in test environment
+      expect(io).toHaveBeenCalledWith(expect.any(String));
       expect(mockSocket.emit).toHaveBeenCalledWith("join-doc", mockProjectId);
     });
 

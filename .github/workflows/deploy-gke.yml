@@ -1,0 +1,153 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
+  GKE_REGION: ${{ vars.GKE_REGION }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to GKE
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.GCP_PROJECT_ID }}
+        install_components: 'gke-gcloud-auth-plugin'
+
+    - name: Configure Docker for GCR
+      run: |
+        gcloud auth configure-docker
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials $GKE_CLUSTER --region $GKE_REGION
+
+    - name: Build and push Socket.io server
+      run: |
+        docker build \
+          -t gcr.io/$GCP_PROJECT_ID/socketio-server:${{ github.sha }} \
+          -t gcr.io/$GCP_PROJECT_ID/socketio-server:latest \
+          -f apps/socketio-server/Dockerfile .
+        docker push gcr.io/$GCP_PROJECT_ID/socketio-server:${{ github.sha }}
+        docker push gcr.io/$GCP_PROJECT_ID/socketio-server:latest
+        
+    - name: Verify kubectl connection
+      run: |
+        kubectl version
+        kubectl cluster-info
+
+    - name: Create Kubernetes configs
+      run: |
+        kubectl create configmap app-config \
+          --from-literal=NEXT_TELEMETRY_DISABLED=1 \
+          --from-literal=CORS_ORIGIN="*" \
+          --from-literal=NODE_ENV=production \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Create Kubernetes secrets
+      run: |
+        # Database configuration
+        kubectl create secret generic database-config \
+          --from-literal=mongo-uri='${{ secrets.MONGO_URI }}' \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # JWT configuration
+        kubectl create secret generic jwt-config \
+          --from-literal=secret='${{ secrets.JWT_SECRET }}' \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # SMTP configuration (optional)
+        kubectl create secret generic smtp-config \
+          --from-literal=host='${{ secrets.SMTP_HOST }}' \
+          --from-literal=port='${{ secrets.SMTP_PORT }}' \
+          --from-literal=user='${{ secrets.SMTP_USER }}' \
+          --from-literal=pass='${{ secrets.SMTP_PASS }}' \
+          --from-literal=sender-email='${{ secrets.SENDER_EMAIL }}' \
+          --dry-run=client -o yaml | kubectl apply -f - || true
+        
+        # Gemini AI configuration (optional)
+        kubectl create secret generic gemini-config \
+          --from-literal=api-key='${{ secrets.GEMINI_API_KEY }}' \
+          --from-literal=model-name='${{ secrets.GEMINI_MODEL_NAME }}' \
+          --dry-run=client -o yaml | kubectl apply -f - || true
+        
+        # GitHub OAuth configuration (optional)
+        kubectl create secret generic github-oauth \
+          --from-literal=client-id='${{ secrets.GH_CLIENT_ID }}' \
+          --from-literal=client-secret='${{ secrets.GH_CLIENT_SECRET }}' \
+          --dry-run=client -o yaml | kubectl apply -f - || true
+
+    - name: Build and push Next.js app
+      run: |
+        docker build \
+          --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }} \
+          --build-arg NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }} \
+          --build-arg NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ vars.NEXT_PUBLIC_GITHUB_CLIENT_ID }} \
+          --build-arg NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }} \
+          --build-arg NEXT_PUBLIC_SOCKETIO_SERVER_URL=${{ vars.NEXT_PUBLIC_SOCKETIO_SERVER_URL }} \
+          --build-arg NEXT_PUBLIC_YJS_SERVER_URL=${{ vars.NEXT_PUBLIC_YJS_SERVER_URL }} \
+          -t gcr.io/$GCP_PROJECT_ID/nextjs-app:${{ github.sha }} \
+          -t gcr.io/$GCP_PROJECT_ID/nextjs-app:latest \
+          -f apps/nextjs-app/Dockerfile .
+        docker push gcr.io/$GCP_PROJECT_ID/nextjs-app:${{ github.sha }}
+        docker push gcr.io/$GCP_PROJECT_ID/nextjs-app:latest
+
+    - name: Build and push Y.js server
+      run: |
+        docker build \
+          -t gcr.io/$GCP_PROJECT_ID/yjs-server:${{ github.sha }} \
+          -t gcr.io/$GCP_PROJECT_ID/yjs-server:latest \
+          -f apps/yjs-server/Dockerfile .
+        docker push gcr.io/$GCP_PROJECT_ID/yjs-server:${{ github.sha }}
+        docker push gcr.io/$GCP_PROJECT_ID/yjs-server:latest
+
+    - name: Update Kubernetes manifests with PROJECT_ID
+      run: |
+        sed -i "s/GCP_PROJECT_ID/$GCP_PROJECT_ID/g" k8s/*.yaml
+    
+    - name: Update image tags in Kubernetes manifests
+      run: |
+        sed -i "s|gcr.io/$GCP_PROJECT_ID/nextjs-app:latest|gcr.io/$GCP_PROJECT_ID/nextjs-app:${{ github.sha }}|g" k8s/nextjs-app-deployment.yaml
+        sed -i "s|gcr.io/$GCP_PROJECT_ID/socketio-server:latest|gcr.io/$GCP_PROJECT_ID/socketio-server:${{ github.sha }}|g" k8s/socketio-server-deployment.yaml
+        sed -i "s|gcr.io/$GCP_PROJECT_ID/yjs-server:latest|gcr.io/$GCP_PROJECT_ID/yjs-server:${{ github.sha }}|g" k8s/yjs-server-deployment.yaml
+
+    - name: Deploy to GKE
+      run: |
+        kubectl apply -f k8s/nextjs-app-deployment.yaml
+        kubectl apply -f k8s/socketio-server-deployment.yaml
+        kubectl apply -f k8s/yjs-server-deployment.yaml
+        kubectl apply -f k8s/ingress.yaml
+
+    - name: Wait for rollout to complete
+      run: |
+        kubectl rollout status deployment/nextjs-app --timeout=5m
+        kubectl rollout status deployment/socketio-server --timeout=5m
+        kubectl rollout status deployment/yjs-server --timeout=5m
+
+    - name: Get deployment status
+      run: |
+        kubectl get services
+        kubectl get pods
+        kubectl get ingress

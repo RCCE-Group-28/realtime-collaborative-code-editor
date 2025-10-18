@@ -22,6 +22,7 @@ RUN npm ci
 # Builder stage - build the application
 FROM base AS builder
 COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
 COPY --from=deps /app/node_modules ./node_modules
 
 # Build the socketio-server
@@ -39,9 +40,14 @@ RUN adduser --system --uid 1001 socketio
 # Copy necessary files
 COPY --from=builder /app/apps/socketio-server/package.json ./apps/socketio-server/
 COPY --from=builder /app/apps/socketio-server/dist ./apps/socketio-server/dist
-COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/package.json ./packages/database/
+COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+
+# Copy the node_modules from builder instead of reinstalling
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/socketio-server/node_modules ./apps/socketio-server/node_modules
 
 USER socketio
 
@@ -49,6 +55,4 @@ EXPOSE 8000
 
 ENV PORT=8000
 
-WORKDIR /app/apps/socketio-server
-
-CMD ["node", "dist/index.js"]
+CMD ["node", "./apps/socketio-server/dist/index.js"]

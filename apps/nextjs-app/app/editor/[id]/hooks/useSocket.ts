@@ -5,6 +5,7 @@ import type {
   NodeAddedPayload,
   NodeDeletedPayload,
 } from "../types";
+import { getSocketIOServerUrl } from "@/app/lib/config";
 
 export function useSocket(projectId: string) {
   const socketRef = useRef<Socket | null>(null);
@@ -13,7 +14,7 @@ export function useSocket(projectId: string) {
   useEffect(() => {
     if (!projectId) return;
 
-    const s = io("http://localhost:3001");
+    const s = io(getSocketIOServerUrl());
     socketRef.current = s;
 
     s.on("chat-history", (msgs: ChatMessage[]) => {

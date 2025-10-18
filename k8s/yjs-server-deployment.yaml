@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yjs-server
+  labels:
+    app: yjs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yjs-server
+  template:
+    metadata:
+      labels:
+        app: yjs-server
+    spec:
+      containers:
+      - name: yjs-server
+        image: gcr.io/GCP_PROJECT_ID/yjs-server:latest
+        ports:
+        - containerPort: 1234
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NODE_ENV
+        - name: PORT
+          value: "1234"
+        - name: HOST
+          value: "0.0.0.0"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          tcpSocket:
+            port: 1234
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 1234
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yjs-service
+  labels:
+    app: yjs-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 1234
+    targetPort: 1234
+    protocol: TCP
+    name: yjs
+  selector:
+    app: yjs-server
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: yjs-server-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: yjs-server
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

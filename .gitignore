@@ -17,3 +17,10 @@
 /jmeter-tests/logs/*.log
 
 .env
+
+# temp repo clones
+repos/
+
+# GCP service account key
+key.json
+*.json.key

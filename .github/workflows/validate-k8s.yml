@@ -1,0 +1,35 @@
+name: Validate Kubernetes Manifests
+
+on:
+  pull_request:
+    paths:
+      - "k8s/**/*.yaml"
+      - ".github/workflows/validate-k8s.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "k8s/**/*.yaml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate K8s Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubeval
+        run: |
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin
+
+      - name: Validate Kubernetes manifests
+        run: |
+          for file in k8s/*.yaml; do
+            echo "Validating $file..."
+            kubeval --strict --ignore-missing-schemas "$file"
+          done

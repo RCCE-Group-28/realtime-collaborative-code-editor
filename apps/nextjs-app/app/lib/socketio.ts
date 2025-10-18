@@ -3,8 +3,7 @@
  * by making HTTP requests to the Socket.IO server
  */
 
-const SOCKET_SERVER_URL =
-  process.env.SOCKET_SERVER_URL || "http://localhost:3001";
+import { getSocketIOServerUrl } from "./config";
 
 export async function emitSocketEvent(
   room: string,
@@ -12,7 +11,7 @@ export async function emitSocketEvent(
   data: unknown,
 ): Promise<boolean> {
   try {
-    const response = await fetch(`${SOCKET_SERVER_URL}/emit`, {
+    const response = await fetch(`${getSocketIOServerUrl()}/emit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

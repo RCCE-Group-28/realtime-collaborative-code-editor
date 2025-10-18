@@ -5,6 +5,7 @@ import type * as Monaco from "monaco-editor";
 import type { MonacoBinding } from "y-monaco";
 import { randomColor } from "../utils/colorHelpers";
 import type { PresenceUser, User } from "../types";
+import { getYjsServerUrl } from "@/app/lib/config";
 
 export function useYjs(
   activeFile: string,
@@ -227,7 +228,7 @@ export function useYjs(
 
       console.log(`📡 Connecting to Yjs room: ${roomName}`);
       const provider = new WebsocketProvider(
-        "ws://localhost:1234",
+        getYjsServerUrl(),
         roomName,
         ydoc,
         {

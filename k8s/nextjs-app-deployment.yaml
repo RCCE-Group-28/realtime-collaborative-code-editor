@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-app
+  labels:
+    app: nextjs-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextjs-app
+  template:
+    metadata:
+      labels:
+        app: nextjs-app
+    spec:
+      containers:
+      - name: nextjs-app
+        image: gcr.io/GCP_PROJECT_ID/nextjs-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NODE_ENV
+        - name: NEXT_TELEMETRY_DISABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NEXT_TELEMETRY_DISABLED
+        - name: PORT
+          value: "3000"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: database-config
+              key: mongo-uri
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-config
+              key: secret
+        # SMTP Configuration
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: smtp-config
+              key: host
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: smtp-config
+              key: port
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: smtp-config
+              key: user
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: smtp-config
+              key: pass
+        - name: SENDER_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: smtp-config
+              key: sender-email
+        # Gemini AI Configuration
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gemini-config
+              key: api-key
+        - name: GEMINI_MODEL_NAME
+          valueFrom:
+            secretKeyRef:
+              name: gemini-config
+              key: model-name
+        # GitHub OAuth Configuration
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: github-oauth
+              key: client-id
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: github-oauth
+              key: client-secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextjs-service
+  labels:
+    app: nextjs-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: nextjs-app
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nextjs-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nextjs-app
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: default
+
+resources:
+  - nextjs-app-deployment.yaml
+  - socketio-server-deployment.yaml
+  - yjs-server-deployment.yaml
+  - ingress.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: rcce
+  app.kubernetes.io/managed-by: kustomize
+
+# Images to use (will be overridden in CD pipeline)
+images:
+  - name: gcr.io/GCP_PROJECT_ID/nextjs-app
+    newTag: latest
+  - name: gcr.io/GCP_PROJECT_ID/socketio-server
+    newTag: latest
+  - name: gcr.io/GCP_PROJECT_ID/yjs-server
+    newTag: latest

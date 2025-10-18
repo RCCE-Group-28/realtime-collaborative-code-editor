@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: apps/nextjs-app/Dockerfile
+      args:
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
+        NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SOCKETIO_SERVER_URL=http://socketio-server:8000
+      - YJS_SERVER_URL=ws://yjs-server:1234
+    depends_on:
+      - socketio-server
+      - yjs-server
+    networks:
+      - app-network
+
+  socketio-server:
+    build:
+      context: .
+      dockerfile: apps/socketio-server/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=8000
+    networks:
+      - app-network
+
+  yjs-server:
+    build:
+      context: .
+      dockerfile: apps/yjs-server/Dockerfile
+    ports:
+      - "1234:1234"
+    environment:
+      - NODE_ENV=production
+      - PORT=1234
+      - HOST=0.0.0.0
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

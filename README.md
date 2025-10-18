@@ -72,8 +72,62 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Google Kubernetes Engine (GKE)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project includes GKE deployment configuration with GitHub Actions CD pipeline.
+
+1. Set up GKE cluster (see `k8s/README.md`)
+2. Configure GitHub secrets (see `.github/SECRETS_SETUP.md`)
+3. Push to `main` branch - automatic deployment via GitHub Actions
+
+### Docker Compose (Local Testing)
+
+```bash
+cp .env.example .env
+# Edit .env with your values
+docker-compose up --build
+```
+
+### Production Build
+
+```bash
+npm run build
+npm run start:all
+```
+
+## Project Structure
+
+```
+├── apps/
+│   ├── nextjs-app/          # Next.js frontend application
+│   ├── socketio-server/     # Real-time Socket.io server
+│   └── yjs-server/          # Y.js WebSocket server for CRDT
+├── packages/
+│   └── database/            # Shared database package
+├── k8s/                     # Kubernetes manifests
+├── scripts/                 # Deployment helper scripts
+├── e2e/                     # Playwright E2E tests
+└── jmeter-tests/            # JMeter performance tests
+```
+
+## Testing
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Performance tests (requires JMeter)
+npm run test:jmeter:all
+```
+
+## Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Socket.io Documentation](https://socket.io/docs/)
+- [Y.js Documentation](https://docs.yjs.dev/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
