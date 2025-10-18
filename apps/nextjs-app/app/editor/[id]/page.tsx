@@ -1028,7 +1028,6 @@ export default function EditorPage() {
                 setCurrentBranch={setCurrentBranch}
                 showToast={showToast}
                 applyStructureToEditor={applyStructureToEditor}
-                onClose={() => setGithubOpen(false)}
               />
             </div>
           </div>
