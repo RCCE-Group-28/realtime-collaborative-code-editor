@@ -722,7 +722,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
   if (!isConnected) {
     return (
-      <div className="flex h-full flex-col bg-gray-900 text-white overflow-hidden">
+      <div className="flex h-full flex-col bg-sidebar text-white overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-4">
           <GitHubConnectButton projectId={projectId} mode="popup" />
         </div>
@@ -731,11 +731,11 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
   }
 
   return (
-    <div className="flex h-full flex-col bg-gray-900 text-white overflow-hidden">
+    <div className="flex h-full flex-col bg-sidebar text-white overflow-hidden">
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Repository Selection */}
-        <Card className="bg-gray-800 border border-gray-700">
+        <Card className="bg-sidebar border border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <VscRepo />
@@ -779,7 +779,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
         </Card>
 
         {/* Create New Repository */}
-        <Card className="bg-gray-800 border border-gray-700">
+        <Card className="bg-sidebar border border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <VscAdd />
@@ -815,7 +815,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Current Branch & Branches */}
         {hasLocalRepo && (
-          <Card className="bg-gray-800 border border-gray-700">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">
                 Branch: {currentBranch}
@@ -868,7 +868,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Git Status */}
         {hasLocalRepo && (
-          <Card className="bg-gray-800 border border-gray-700">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Git Status</CardTitle>
             </CardHeader>
@@ -896,7 +896,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Push/Pull Actions */}
         {hasLocalRepo && selectedRepo && (
-          <Card className="bg-gray-800 border border-gray-700">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Sync with GitHub</CardTitle>
             </CardHeader>
@@ -923,7 +923,7 @@ const GitHubIntegrationPanel: React.FC<GitHubIntegrationPanelProps> = ({
 
         {/* Commit History */}
         {commitHistory.length > 0 && (
-          <Card className="bg-gray-800 border border-gray-700">
+          <Card className="bg-sidebar border border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">Recent Commits</CardTitle>
             </CardHeader>
