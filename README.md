@@ -98,6 +98,47 @@ See [Environment Variables](#environment-variables) section for details.
 npm run build
 ```
 
+### 5: Authentication
+
+The application supports two authentication methods:
+
+#### Option 1: GitHub OAuth (Recommended)
+
+Sign in using your GitHub account directly:
+
+1. Click **"Sign in with GitHub"** button
+2. Authorize the application
+3. You'll be automatically logged in
+
+**Note:** Requires GitHub account setup in `.env` files
+
+#### Option 2: Gmail Sign-in
+
+##### Method A: Existing Gmail Account
+1. Click **"Sign in with Google"**
+2. Select your Gmail account from the list (if already signed in on your device)
+3. Click "Continue"
+
+##### Method B: New Gmail Account or Manual Sign-in
+1. Click **"Sign in with Google"**
+2. Click **"Use another account"**
+3. Enter your Gmail email address
+4. Enter your strong password
+5. Complete any required verification steps
+6. You'll be logged in
+
+**Important:** For security, use a strong password with:
+- ✓ Minimum 8 characters
+- ✓ Mix of uppercase and lowercase letters
+- ✓ Numbers and special characters
+- ✓ Avoid using simple/dictionary words
+
+#### Quick Sign-in Tips
+
+- **Already Signed In:** If you're already logged into Gmail/GitHub on your device, just click the corresponding button
+- **Multiple Accounts:** You can switch accounts by signing out and signing in with a different account
+- **First Time:** Complete your user profile after signing in
+- **Security:** Never share your password with others
 ---
 
 ## Development
