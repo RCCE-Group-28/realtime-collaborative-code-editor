@@ -1,79 +1,749 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Real-time Collaborative Code Editor
 
-## ✨ Features
+A modern, browser-based code editor enabling seamless real-time collaboration with built-in GitHub integration, version control, and live synchronization using WebSockets and CRDTs.
 
-- 🔄 **Real-time Collaboration**: Edit code simultaneously with multiple users
-- 📝 **Monaco Editor**: Full-featured code editor with syntax highlighting
-- 🌳 **File Tree Management**: Create, edit, and organize project files
-- 💬 **Team Chat**: Integrated messaging for better collaboration
-- 🤖 **AI Assistant**: AI-powered code suggestions and chat
-- 🔀 **Local Git Version Control**: Branch management, commits, and merges
-- 🐙 **GitHub Integration**: Connect to GitHub, create repos, view commits (NEW!)
-- 👥 **Project Collaboration**: Invite team members and manage access
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)
+![TypeScript](https://img.shields.io/badge/typescript-%3E%3D5.0-blue.svg)
 
-## 🚀 GitHub Integration
+## 🌟 Key Features
 
-CollabCode now supports full GitHub integration! Connect your GitHub account to:
+- **Real-time Collaboration** - Multiple users editing simultaneously with live cursor tracking
+- **GitHub Integration** - Clone repositories, push/pull changes directly from the editor
+- **Version Control** - Full Git operations (commit, branch, merge) integrated into the UI
+- **CRDT-based Sync** - Conflict-free synchronized editing using Yjs framework
+- **Modern UI** - Dark theme with responsive design and smooth animations
+- **Toast Notifications** - Elegant, minimal notification system for user feedback
+- **File Management** - Drag-and-drop file operations with real-time synchronization
 
-- Create new repositories directly from the editor
-- View commit history from your GitHub repos
-- Sync your collaborative work with GitHub (push/pull coming soon)
+## 📋 Table of Contents
 
-See [GITHUB_INTEGRATION.md](./GITHUB_INTEGRATION.md) for setup instructions.
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Development](#development)
+- [Building](#building)
+- [Testing](#testing)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Getting Started
+---
 
-First, install dependencies:
+## Prerequisites
 
+Before you begin, ensure you have the following installed:
+
+- **Node.js** >= 18.0.0 ([Download](https://nodejs.org/))
+- **npm** >= 9.0.0 or **yarn** >= 1.22.0
+- **Git** >= 2.0.0
+- **Docker** (optional, for containerized deployment)
+
+### System Requirements
+
+- **RAM**: Minimum 2GB (4GB recommended)
+- **Disk Space**: 5GB for dependencies and build artifacts
+- **OS**: macOS, Linux, or Windows (with WSL2)
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/RCCE-Group-28/realtime-collaborative-code-editor.git
+cd realtime-collaborative-code-editor
+```
+
+### 2. Install Dependencies
+
+Using npm:
 ```bash
 npm install
 ```
 
-To run the development servers (Next.js, Socket.IO, and Yjs WebSocket servers):
-
+Or using yarn:
 ```bash
-npm run dev:all
+yarn install
 ```
 
-This will start all three servers concurrently:
+### 3. Configure Environment Variables
 
-- Next.js development server on http://localhost:3000
-- Socket.IO server on http://localhost:3001 (or port defined in SOCKET_PORT env var)
-- Yjs WebSocket server on ws://localhost:1234 (or port defined in YJS_PORT env var)
+Copy the environment template and configure:
 
-For production, first build the Next.js app:
+```bash
+# 1. Navigate to nextjs-app
+cd apps/nextjs-app
+cp .env.example .env.local
+# Edit .env.local with your values
+
+# 2. Navigate to socketio-server
+cd ../socketio-server
+cp .env.example .env
+# Edit .env with your values
+
+# 4. Return to root and start development
+cd ../..
+npm run dev
+```
+
+See [Environment Variables](#environment-variables) section for details.
+
+### 4. Verify Installation
 
 ```bash
 npm run build
-npm run start:all
 ```
 
-Alternatively, you can run individual servers:
+### 5: Authentication
 
-- `npm run dev` - Next.js only
-- `npm start` - Next.js production only
-- `tsx server/socketServer.ts` - Websocket server only
-- `y-websocket-server` - Yjs WebSocket server only
+The application supports two authentication methods:
 
-Then,
+#### Option 1: GitHub OAuth (Recommended)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sign in using your GitHub account directly:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Click **"Sign in with GitHub"** button
+2. Authorize the application
+3. You'll be automatically logged in
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Note:** Requires GitHub account setup in `.env` files
 
-## Learn More
+#### Option 2: Gmail Sign-in
 
-To learn more about Next.js, take a look at the following resources:
+##### Method A: Existing Gmail Account
+1. Click **"Sign in with Google"**
+2. Select your Gmail account from the list (if already signed in on your device)
+3. Click "Continue"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+##### Method B: New Gmail Account or Manual Sign-in
+1. Click **"Sign in with Google"**
+2. Click **"Use another account"**
+3. Enter your Gmail email address
+4. Enter your strong password
+5. Complete any required verification steps
+6. You'll be logged in
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Important:** For security, use a strong password with:
+- ✓ Minimum 8 characters
+- ✓ Mix of uppercase and lowercase letters
+- ✓ Numbers and special characters
+- ✓ Avoid using simple/dictionary words
 
-## Deploy on Vercel
+#### Quick Sign-in Tips
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Already Signed In:** If you're already logged into Gmail/GitHub on your device, just click the corresponding button
+- **Multiple Accounts:** You can switch accounts by signing out and signing in with a different account
+- **First Time:** Complete your user profile after signing in
+- **Security:** Never share your password with others
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+### Starting the Development Server
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`
+
+### Development Services
+
+The development environment includes:
+
+- **Next.js Frontend** - React-based UI with hot-reload
+- **Socket.IO Server** - Real-time WebSocket communication
+- **Yjs Server** - CRDT synchronization service
+- **MongoDB** - Local database (if using local setup)
+
+### Development Commands
+
+```bash
+# Start all services in development mode
+npm run dev
+
+# Start specific service
+npm run dev --workspace=nextjs-app
+npm run dev --workspace=socketio-server
+npm run dev --workspace=yjs-server
+
+# Run linting
+npm run lint
+
+# Format code
+npm run format
+
+# Run tests
+npm run test
+
+# Run end-to-end tests
+npm run test:e2e
+```
+
+### Hot Module Replacement
+
+The development server supports HMR for rapid development:
+- **Frontend changes**: Automatically reload in browser
+- **API changes**: Restart server (handled automatically)
+- **Styles**: Update without full page reload
+
+---
+
+## Building
+
+### Build Production Artifacts
+
+```bash
+npm run build
+```
+
+This generates:
+- `/apps/nextjs-app/.next` - Next.js production build
+- `/dist` - Compiled TypeScript for backend services
+
+### Build Output
+
+```
+realtime-collaborative-code-editor/
+├── apps/
+│   ├── nextjs-app/.next/         # Next.js production build
+│   ├── socketio-server/dist/     # Socket.IO server build
+│   └── yjs-server/dist/          # Yjs server build
+└── packages/
+    └── database/dist/            # Database package build
+```
+
+### Build Verification
+
+```bash
+# Verify build was successful
+npm run build
+npm start
+```
+
+### Production Build Options
+
+**Option 1: Monorepo Build (Recommended)**
+```bash
+npm run build  # Builds all packages using Turbo
+```
+
+**Option 2: Selective Build**
+```bash
+npm run build --workspace=nextjs-app
+npm run build --workspace=socketio-server
+npm run build --workspace=yjs-server
+```
+
+---
+
+### GitHub OAuth Setup
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create OAuth App
+3. Set Authorization callback URL: `http://localhost:3000/api/auth/github/callback`
+4. Copy Client ID and Client Secret to `.env`
+
+---
+
+## Testing
+
+### Jest Unit Tests
+
+Jest tests run on individual packages and components.
+
+#### Run All Jest Tests
+
+```bash
+npm run test
+```
+
+#### Run Tests in Specific Workspace
+
+```bash
+npm run test --workspace=nextjs-app
+npm run test --workspace=socketio-server
+npm run test --workspace=database
+```
+
+#### Run Tests in Watch Mode
+
+```bash
+npm run test -- --watch
+```
+
+#### Run Tests with Coverage
+
+```bash
+npm run test -- --coverage
+```
+
+---
+
+### Playwright E2E Tests
+
+End-to-end tests verify the entire application workflow.
+
+#### Run All E2E Tests
+
+```bash
+npm run test:e2e
+```
+
+#### Run E2E Tests in UI Mode (Interactive)
+
+```bash
+npm run test:e2e:ui
+```
+
+#### Run E2E Tests in Debug Mode
+
+```bash
+npm run test:e2e:debug
+```
+
+#### Run E2E Tests with Browser Window Visible
+
+```bash
+npm run test:e2e:headed
+```
+
+#### Run Specific E2E Test File
+
+```bash
+npx playwright test e2e/tests/collaboration.spec.ts
+```
+
+---
+
+### JMeter Performance Tests
+
+JMeter tests measure API performance, load testing, and WebSocket performance.
+
+#### Prerequisites
+
+Install JMeter:
+
+```bash
+# macOS with Homebrew
+brew install jmeter
+
+# Or download from: https://jmeter.apache.org/download_jmeter.cgi
+```
+
+Verify installation:
+
+```bash
+jmeter --version
+```
+
+#### Run JMeter Tests
+
+**1. API Test (Basic API performance)**
+
+```bash
+npm run test:jmeter:api
+```
+
+**2. Performance Test (Response times)**
+
+```bash
+npm run test:jmeter:performance
+```
+
+**3. Load Test (Concurrent users)**
+
+```bash
+npm run test:jmeter:load
+```
+
+**4. Socket.IO Performance Test (WebSocket performance)**
+
+```bash
+npm run test:jmeter:socketio
+```
+
+**5. Yjs Performance Test (CRDT sync performance)**
+
+```bash
+npm run test:jmeter:yjs
+```
+
+**6. Run All JMeter Tests**
+
+```bash
+npm run test:jmeter:all
+```
+
+#### View JMeter Results
+
+Results are generated in `jmeter-tests/results/`:
+
+```bash
+# View API test report
+open jmeter-tests/results/api_test_report/index.html
+
+# View Performance test report
+open jmeter-tests/results/performance_report/index.html
+
+# View Load test report
+open jmeter-tests/results/load_report/index.html
+
+# View Socket.IO report
+open jmeter-tests/results/socketio_report/index.html
+
+# View Yjs report
+open jmeter-tests/results/yjs_report/index.html
+```
+
+#### Clean JMeter Results
+
+```bash
+npm run test:jmeter:clean
+```
+
+---
+
+## Complete Testing Workflow
+
+### Quick Start Testing
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start development servers
+npm run dev
+
+# 3. In a new terminal, run all tests
+npm run test              # Jest unit tests
+npm run test:e2e         # E2E tests
+npm run test:jmeter:all  # All JMeter tests
+```
+
+### Recommended Testing Order
+
+```bash
+# 1. Unit tests (fastest)
+npm run test
+
+# 2. E2E tests (integration)
+npm run test:e2e
+
+# 3. Performance tests (requires running servers)
+npm run dev &            # Start servers in background
+npm run test:jmeter:api
+npm run test:jmeter:socketio
+npm run test:jmeter:yjs
+```
+
+## Usage
+
+### 1. Starting a Collaborative Session
+
+```bash
+# Start development server
+npm run dev
+
+# Access at http://localhost:3000
+# Login with GitHub or create account
+```
+
+### 2. Creating a Project
+
+1. Click "New Project"
+2. Select repository source:
+   - Empty project
+   - Clone from GitHub URL
+   - Upload existing files
+3. Name your project
+4. Click "Create"
+
+### 3. Inviting Collaborators
+
+1. In project, click "Share"
+2. Copy project link
+3. Send to collaborators
+4. They click link and join session
+
+### 4. Version Control Operations
+
+#### Clone from GitHub
+```
+1. Click "GitHub Integration" panel
+2. Connect GitHub account
+3. Select repository
+4. Click "Load"
+5. Start editing
+```
+
+#### Commit Changes
+```
+1. Make changes in editor
+2. Open "Version Control" panel
+3. Stage files
+4. Enter commit message
+5. Click "Commit"
+```
+
+#### Push to GitHub
+```
+1. Commit your changes
+2. Click "Push to GitHub" button
+3. Changes sync to remote repository
+4. Toast notification confirms success
+```
+
+### 5. Real-time Features
+
+- **Live Cursors** - See collaborators' cursors in real-time
+- **Presence** - Know who's online and which file they're viewing
+- **Instant Sync** - All changes synchronized within 100-200ms
+- **Auto-save** - Changes automatically saved to database
+
+---
+
+## Project Structure
+
+```
+realtime-collaborative-code-editor/
+├── apps/
+│   ├── nextjs-app/                 # React Frontend
+│   │   ├── app/
+│   │   │   ├── editor/[id]/        # Editor page components
+│   │   │   ├── api/                # API routes
+│   │   │   └── page.tsx            # Homepage
+│   │   ├── public/                 # Static assets
+│   │   └── package.json
+│   │
+│   ├── socketio-server/            # WebSocket Server
+│   │   ├── src/
+│   │   │   ├── index.ts            # Server entry
+│   │   │   ├── events/             # Socket event handlers
+│   │   │   └── middleware/         # Express middleware
+│   │   └── package.json
+│   │
+│   └── yjs-server/                 # CRDT Sync Server
+│       ├── src/
+│       │   ├── index.ts
+│       │   └── handlers/
+│       └── package.json
+│
+├── packages/
+│   └── database/                   # Shared database layer
+│       ├── src/
+│       │   ├── models/
+│       │   └── queries/
+│       └── package.json
+│
+├── e2e/                            # End-to-end tests
+│   └── tests/
+│       └── collaboration.spec.ts
+│
+├── jmeter-tests/                   # Performance tests
+│   └── test-plans/
+│
+├── docker-compose.yml              # Docker configuration
+├── turbo.json                       # Turbo monorepo config
+├── package.json                    # Root package.json
+└── README.md
+```
+
+---
+
+## API Documentation
+
+### REST API
+
+#### Authentication
+```
+POST /api/auth/login
+POST /api/auth/signup
+POST /api/auth/github/callback
+```
+
+#### Projects
+```
+GET    /api/projects              # List projects
+POST   /api/projects              # Create project
+GET    /api/projects/:id          # Get project
+PUT    /api/projects/:id          # Update project
+DELETE /api/projects/:id          # Delete project
+```
+
+#### Version Control
+```
+GET    /api/projects/:id/version-control/status
+POST   /api/projects/:id/version-control/commit
+POST   /api/projects/:id/version-control/push
+POST   /api/projects/:id/version-control/pull
+GET    /api/projects/:id/version-control/branch-git
+POST   /api/projects/:id/version-control/branch-git
+```
+
+#### GitHub
+```
+GET    /api/github/repos          # List repositories
+POST   /api/github/push           # Push to GitHub
+POST   /api/github/pull           # Pull from GitHub
+```
+
+### WebSocket Events
+
+#### Presence
+```
+socket.on('user:online', (user) => {})
+socket.on('user:offline', (userId) => {})
+socket.on('cursor:move', (position) => {})
+```
+
+#### Collaboration
+```
+socket.emit('file:open', { filePath })
+socket.emit('file:change', { content })
+socket.on('file:updated', (data) => {})
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Port Already in Use
+```bash
+# Kill process on port 3000
+lsof -ti:3000 | xargs kill -9
+
+# Kill process on port 8080
+lsof -ti:8080 | xargs kill -9
+```
+
+#### 2. MongoDB Connection Failed
+```bash
+# Start MongoDB locally
+mongod --dbpath ~/data/db
+
+# Or use Docker
+docker run -d -p 27017:27017 mongo
+```
+
+#### 3. GitHub OAuth Not Working
+- Verify callback URL matches exactly in GitHub settings
+- Check GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET
+- Ensure cookies are enabled in browser
+
+#### 4. Real-time Sync Not Working
+- Verify WebSocket connection: `http://localhost:8080`
+- Check browser console for errors
+- Verify Yjs server is running on port 8081
+
+#### 5. Build Fails
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+### Debug Mode
+
+```bash
+# Enable verbose logging
+LOG_LEVEL=debug npm run dev
+
+# Check specific service logs
+npm run dev --workspace=socketio-server | grep -E "ERROR|WARN"
+```
+
+---
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make changes and commit: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature/your-feature`
+5. Submit a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Write unit tests for new features
+- Maintain code style with ESLint
+- Update documentation as needed
+- Describe changes in commit messages
+
+### Testing Before Submission
+
+```bash
+npm run lint
+npm run test
+npm run test:e2e
+npm run build
+```
+
+---
+
+## Performance Optimization
+
+### For Production
+
+```bash
+# Enable Node clustering
+NODE_ENV=production npm start
+
+# Use CDN for static assets
+# Enable gzip compression
+# Implement caching strategies
+```
+
+### Monitoring
+
+- Use New Relic or DataDog
+- Monitor WebSocket connections
+- Track database query performance
+- Set up alerts for errors
+
+---
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## Support & Resources
+
+- **Documentation**: [Wiki](https://github.com/RCCE-Group-28/realtime-collaborative-code-editor/wiki)
+- **Issues**: [GitHub Issues](https://github.com/RCCE-Group-28/realtime-collaborative-code-editor/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/RCCE-Group-28/realtime-collaborative-code-editor/discussions)
+
+---
+
+## Acknowledgments
+
+- [Yjs](https://github.com/yjs/yjs) - Conflict-free CRDT library
+- [Monaco Editor](https://github.com/microsoft/monaco-editor) - Code editor component
+- [Socket.IO](https://socket.io/) - Real-time communication
+- [Next.js](https://nextjs.org/) - React framework
+- [Tailwind CSS](https://tailwindcss.com/) - Styling framework
+
+---
+
+## Contact & Social
+
+- **GitHub**: [@RCCE-Group-28](https://github.com/RCCE-Group-28)
+- **Issues & Discussions**: Use GitHub Issues for bugs and feature requests
+
+---
+
+**Last Updated**: October 18, 2025  
+**Version**: 1.0.0  
+**Status**: ✅ Production Ready
